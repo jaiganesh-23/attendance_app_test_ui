@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/photo_capture_app.html" },
+    { "source": "/", "destination": "/index.html" },
     { "source": "/dataset", "destination": "/dataset_app.html" }
   ],
   "cleanUrls": true,
