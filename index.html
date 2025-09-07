@@ -748,8 +748,8 @@
                 const constraints = {
                     video: {
                         facingMode: currentFacingMode,
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        width: { ideal: 1280, min: 640 },
+                        height: { ideal: 720, min: 480 }
                     }
                 };
 
@@ -761,14 +761,23 @@
                 video.style.display = 'block';
                 placeholder.style.display = 'none';
                 
-                document.getElementById('startCameraBtn').disabled = true;
-                document.getElementById('switchCameraBtn').disabled = false;
-                document.getElementById('captureBtn').disabled = false;
-                document.getElementById('stopCameraBtn').disabled = false;
+                video.addEventListener('loadedmetadata', () => {
+                    console.log('[v0] Video metadata loaded, camera ready');
+                    document.getElementById('startCameraBtn').disabled = true;
+                    document.getElementById('switchCameraBtn').disabled = false;
+                    document.getElementById('captureBtn').disabled = false;
+                    document.getElementById('stopCameraBtn').disabled = false;
+                });
                 
             } catch (error) {
-                console.error('Error accessing camera:', error);
-                alert('Unable to access camera. Please check permissions.');
+                console.error('[v0] Error accessing camera:', error);
+                if (error.name === 'NotAllowedError') {
+                    alert('Camera permission denied. Please allow camera access and try again.');
+                } else if (error.name === 'NotFoundError') {
+                    alert('No camera found on this device.');
+                } else {
+                    alert('Unable to access camera. Please check permissions and try again.');
+                }
             }
         }
 
@@ -778,21 +787,35 @@
             }
             
             currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            console.log('[v0] Switching to camera:', currentFacingMode);
             await startCamera();
         }
 
         function capturePhoto() {
             const video = document.getElementById('videoElement');
             const canvas = document.getElementById('captureCanvas');
-            const ctx = canvas.getContext('2d');
             
+            if (!video.videoWidth || !video.videoHeight) {
+                console.error('[v0] Video not ready for capture');
+                alert('Camera not ready. Please wait a moment and try again.');
+                return;
+            }
+            
+            const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
+            
+            console.log('[v0] Capturing photo:', canvas.width, 'x', canvas.height);
             ctx.drawImage(video, 0, 0);
             
-            // Convert to blob and process
             canvas.toBlob(blob => {
-                processPhoto(blob);
+                if (blob) {
+                    console.log('[v0] Photo captured successfully, size:', blob.size);
+                    processPhoto(blob);
+                } else {
+                    console.error('[v0] Failed to create photo blob');
+                    alert('Failed to capture photo. Please try again.');
+                }
             }, 'image/jpeg', 0.8);
         }
 
@@ -800,6 +823,7 @@
             if (currentStream) {
                 currentStream.getTracks().forEach(track => track.stop());
                 currentStream = null;
+                console.log('[v0] Camera stopped');
             }
             
             const video = document.getElementById('videoElement');
@@ -818,12 +842,13 @@
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (file && file.type.startsWith('image/')) {
+                console.log('[v0] Processing uploaded file:', file.name);
                 processPhoto(file);
             }
         }
 
         function processPhoto(photoBlob) {
-            // Simulate processing
+            console.log('[v0] Starting photo processing');
             const fileName = `attendance_${new Date().toISOString().slice(0, 10)}_${Date.now()}.xlsx`;
             const fileInfo = {
                 name: fileName,
@@ -835,10 +860,14 @@
             generatedFiles.unshift(fileInfo);
             updateFileList();
             
-            // Simulate processing completion
+            if (window.innerWidth <= 768) {
+                document.getElementById('fileList').scrollIntoView({ behavior: 'smooth' });
+            }
+            
             setTimeout(() => {
                 fileInfo.status = 'completed';
                 updateFileList();
+                console.log('[v0] Photo processing completed');
             }, 3000);
         }
 
@@ -875,7 +904,6 @@
         }
 
         function downloadFile(fileName) {
-            // Generate mock Excel data
             const csvContent = `Name,Roll Number,Time,Status\nJohn Doe,101,${new Date().toLocaleTimeString()},Present\nJane Smith,102,${new Date().toLocaleTimeString()},Present\nMike Johnson,103,${new Date().toLocaleTimeString()},Present`;
             
             const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -913,6 +941,7 @@
 
         // Initialize with some sample files
         window.addEventListener('load', () => {
+            document.getElementById('startCameraBtn').disabled = false;
             document.getElementById('switchCameraBtn').disabled = true;
             document.getElementById('captureBtn').disabled = true;
             document.getElementById('stopCameraBtn').disabled = true;
@@ -932,6 +961,8 @@
                 }
             ];
             updateFileList();
+            
+            console.log('[v0] App initialized');
         });
 
         // Window resize handler to fix navigation states
@@ -941,7 +972,6 @@
             const mobileToggle = document.querySelector('.mobile-toggle');
             
             if (window.innerWidth <= 768) {
-                // Reset to mobile state
                 sidebar.classList.remove('minimized', 'collapsed');
                 mainWrapper.classList.remove('minimized', 'expanded');
                 mobileToggle.classList.remove('show-desktop');
