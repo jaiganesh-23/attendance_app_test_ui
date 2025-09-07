@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance System - Upload Dataset</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Navigation Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-200px);
+        }
+
+        /* Added minimized sidebar state with only menu button visible */
+        .sidebar.minimized {
+            width: 60px;
+            transform: translateX(0);
+        }
+
+        .sidebar.minimized .sidebar-header h2,
+        .sidebar.minimized .nav-item span {
+            display: none;
+        }
+
+        .sidebar.minimized .nav-item {
+            justify-content: center;
+            padding: 12px;
+        }
+
+        .sidebar.minimized .nav-item svg {
+            margin-right: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h2 {
+            color: #333;
+            font-size: 1.2rem;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            color: #666;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-menu {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            color: #333;
+            font-size: 0.95rem;
+            transition: background-color 0.2s;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-item.active {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-right: 3px solid #667eea;
+        }
+
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+        }
+
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Show mobile toggle when sidebar is minimized on desktop */
+        .mobile-toggle.show-desktop {
+            display: block;
+        }
+
+        .main-wrapper {
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .main-wrapper.expanded {
+            margin-left: 0;
+        }
+
+        /* Added minimized wrapper state */
+        .main-wrapper.minimized {
+            margin-left: 60px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .instructions h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .instructions ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .instructions li {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .instructions code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #495057;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 1.3rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .section-title svg {
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 140px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .dataset-tree {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .tree-item {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+            color: #495057;
+        }
+
+        .tree-item.folder {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .tree-item.file {
+            color: #28a745;
+            margin-left: 20px;
+        }
+
+        .tree-icon {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .model-training {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .model-training h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 8px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: #2196f3;
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-250px);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            /* Reset minimized state on mobile */
+            .sidebar.minimized {
+                width: 250px;
+                transform: translateX(-250px);
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+            }
+
+            /* Reset minimized wrapper on mobile */
+            .main-wrapper.minimized {
+                margin-left: 0;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+
+            /* Make main content single column on mobile/tablet */
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .actions {
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .btn {
+                flex: 1;
+                min-width: 100px;
+                justify-content: center;
+                padding: 10px 16px;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Added tablet breakpoint for single column layout */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 30px 20px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .instructions {
+                padding: 20px;
+            }
+
+            .actions {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .btn {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Menu</h2>
+            <button class="toggle-btn" onclick="toggleSidebar()">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="nav-menu">
+            <a href="photo_capture_app.html" class="nav-item">
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                </svg>
+                <span>Home</span>
+            </a>
+            <a href="dataset_app.html" class="nav-item active">
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+                </svg>
+                <span>Upload Dataset</span>
+            </a>
+        </div>
+    </nav>
+
+    <button class="mobile-toggle" onclick="toggleSidebar()">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+        </svg>
+    </button>
+
+    <div class="main-wrapper" id="mainWrapper">
+        <div class="container">
+            <div class="header">
+                <h1>Upload Dataset</h1>
+                <p>Manage your student dataset for face recognition training</p>
+            </div>
+
+            <div class="instructions">
+                <h2>Dataset Structure Instructions</h2>
+                <ul>
+                    <li>
+                        <span class="step-number">1</span>
+                        <div>
+                            <strong>Main Folder:</strong> Create a main folder named <code>attendance_dataset</code>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-number">2</span>
+                        <div>
+                            <strong>Student Folders:</strong> Inside the main folder, create individual folders for each student
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-number">3</span>
+                        <div>
+                            <strong>Naming Convention:</strong> Name each folder as <code>name__rollnumber</code> (e.g., <code>john_doe__101</code>)
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-number">4</span>
+                        <div>
+                            <strong>Images:</strong> Add multiple clear photos of the student inside their respective folder
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-number">5</span>
+                        <div>
+                            <strong>Image Quality:</strong> Use high-quality, well-lit images with clear facial features for better recognition accuracy
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="main-content">
+                <!-- Upload Section -->
+                <div class="section">
+                    <div class="section-title">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.413V13H5.5z"/>
+                            <path d="M9 13h2v5a1 1 0 11-2 0v-5z"/>
+                        </svg>
+                        Upload Dataset
+                    </div>
+
+                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('folderInput').click()">
+                        <svg width="48" height="48" fill="currentColor" viewBox="0 0 20 20" style="color: #ccc; margin-bottom: 15px;">
+                            <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+                        </svg>
+                        <h3>Upload Dataset Folder</h3>
+                        <p>Drag and drop your <code>attendance_dataset</code> folder here or click to browse</p>
+                        <button class="btn btn-primary" style="margin-top: 15px;">Choose Folder</button>
+                    </div>
+                    <input type="file" id="folderInput" webkitdirectory multiple style="display: none;" onchange="handleFolderUpload(event)">
+
+                    <div class="actions">
+                        <button class="btn btn-primary" onclick="addFolder()">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M.5 3l.04.87a1.99 1.99 0 00-.342 1.311l.637 7A2 2 0 002.826 14H9.81a2 2 0 001.991-1.819l.637-7a1.99 1.99 0 00-.342-1.311L12.14 3H2.86zM11.5 1v1h-11V1a1 1 0 011-1h9a1 1 0 011 1z"/>
+                            </svg>
+                            Add Folder
+                        </button>
+                        <button class="btn btn-primary" onclick="addFiles()">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/>
+                            </svg>
+                            Add Files
+                        </button>
+                    </div>
+
+                    <div class="model-training" id="modelTraining" style="display: none;">
+                        <h3>Training Model</h3>
+                        <p>Processing dataset and training face recognition model...</p>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <p id="progressText">0% Complete</p>
+                    </div>
+                </div>
+
+                <!-- Dataset Visualization -->
+                <div class="section">
+                    <div class="section-title">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+                        </svg>
+                        Dataset Structure
+                    </div>
+
+                    <div class="dataset-tree" id="datasetTree">
+                        <div class="tree-item folder">
+                            <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+                            </svg>
+                            📁 attendance_dataset/
+                        </div>
+                        <div class="tree-item folder" style="margin-left: 20px;">
+                            <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+                            </svg>
+                            📁 john_doe__101/
+                        </div>
+                        <div class="tree-item file" style="margin-left: 40px;">
+                            <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                            </svg>
+                            📷 photo1.jpg
+                        </div>
+                        <div class="tree-item file" style="margin-left: 40px;">
+                            <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                            </svg>
+                            📷 photo2.jpg
+                        </div>
+                        <div class="tree-item file" style="margin-left: 40px;">
+                            <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                            </svg>
+                            📷 photo3.jpg
+                        </div>
+                        <div class="tree-item folder" style="margin-left: 20px;">
+                            <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+                            </svg>
+                            📁 jane_smith__102/
+                        </div>
+                        <div class="tree-item file" style="margin-left: 40px;">
+                            <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                            </svg>
+                            📷 image1.jpg
+                        </div>
+                        <div class="tree-item file" style="margin-left: 40px;">
+                            <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                            </svg>
+                            📷 image2.jpg
+                        </div>
+                        <div class="tree-item folder" style="margin-left: 20px;">
+                            <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+                            </svg>
+                            📁 mike_johnson__103/
+                        </div>
+                        <div class="tree-item file" style="margin-left: 40px;">
+                            <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                            </svg>
+                            📷 pic1.jpg
+                        </div>
+                        <div class="tree-item file" style="margin-left: 40px;">
+                            <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                            </svg>
+                            📷 pic2.jpg
+                        </div>
+                        <div class="tree-item file" style="margin-left: 40px;">
+                            <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                            </svg>
+                            📷 pic3.jpg
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button class="btn btn-success" onclick="trainModel()">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                                <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l.16.292c.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255-.52l.094-.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/>
+                            </svg>
+                            Train Model
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let datasetStructure = {};
+
+        // Navigation functions
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainWrapper = document.getElementById('mainWrapper');
+            const mobileToggle = document.querySelector('.mobile-toggle');
+            
+            if (window.innerWidth <= 768) {
+                // Mobile behavior
+                sidebar.classList.toggle('open');
+            } else {
+                // Desktop behavior - toggle between full, minimized, and collapsed
+                if (sidebar.classList.contains('collapsed')) {
+                    // From collapsed to full
+                    sidebar.classList.remove('collapsed');
+                    sidebar.classList.remove('minimized');
+                    mainWrapper.classList.remove('expanded');
+                    mainWrapper.classList.remove('minimized');
+                    mobileToggle.classList.remove('show-desktop');
+                } else if (sidebar.classList.contains('minimized')) {
+                    // From minimized to collapsed
+                    sidebar.classList.add('collapsed');
+                    sidebar.classList.remove('minimized');
+                    mainWrapper.classList.add('expanded');
+                    mainWrapper.classList.remove('minimized');
+                    mobileToggle.classList.remove('show-desktop');
+                } else {
+                    // From full to minimized
+                    sidebar.classList.add('minimized');
+                    mainWrapper.classList.add('minimized');
+                    mobileToggle.classList.add('show-desktop');
+                }
+            }
+        }
+
+        // Dataset management functions
+        function handleFolderUpload(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+
+            // Process uploaded files
+            for (let file of files) {
+                const pathParts = file.webkitRelativePath.split('/');
+                if (pathParts.length >= 3) {
+                    const mainFolder = pathParts[0];
+                    const studentFolder = pathParts[1];
+                    const fileName = pathParts[2];
+
+                    if (!datasetStructure[mainFolder]) {
+                        datasetStructure[mainFolder] = {};
+                    }
+                    if (!datasetStructure[mainFolder][studentFolder]) {
+                        datasetStructure[mainFolder][studentFolder] = [];
+                    }
+                    datasetStructure[mainFolder][studentFolder].push(fileName);
+                }
+            }
+
+            updateDatasetVisualization();
+            alert(`Successfully uploaded ${files.length} files!`);
+        }
+
+        function addFolder() {
+            const folderName = prompt('Enter folder name (format: name__rollnumber):');
+            if (folderName && folderName.includes('__')) {
+                if (!datasetStructure['attendance_dataset']) {
+                    datasetStructure['attendance_dataset'] = {};
+                }
+                if (!datasetStructure['attendance_dataset'][folderName]) {
+                    datasetStructure['attendance_dataset'][folderName] = [];
+                    updateDatasetVisualization();
+                    alert(`Folder "${folderName}" added successfully!`);
+                } else {
+                    alert('Folder already exists!');
+                }
+            } else {
+                alert('Please use the correct format: name__rollnumber');
+            }
+        }
+
+        function addFiles() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true;
+            input.accept = 'image/*';
+            input.onchange = function(event) {
+                const files = event.target.files;
+                const folderName = prompt('Select folder to add files to:');
+                
+                if (folderName && datasetStructure['attendance_dataset'] && datasetStructure['attendance_dataset'][folderName]) {
+                    for (let file of files) {
+                        datasetStructure['attendance_dataset'][folderName].push(file.name);
+                    }
+                    updateDatasetVisualization();
+                    alert(`Added ${files.length} files to ${folderName}!`);
+                } else {
+                    alert('Folder not found. Please create the folder first.');
+                }
+            };
+            input.click();
+        }
+
+        function updateDatasetVisualization() {
+            const treeContainer = document.getElementById('datasetTree');
+            let html = '';
+
+            for (let mainFolder in datasetStructure) {
+                html += `
+                    <div class="tree-item folder">
+                        <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+                        </svg>
+                        📁 ${mainFolder}/
+                    </div>
+                `;
+
+                for (let studentFolder in datasetStructure[mainFolder]) {
+                    html += `
+                        <div class="tree-item folder" style="margin-left: 20px;">
+                            <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+                            </svg>
+                            📁 ${studentFolder}/
+                        </div>
+                    `;
+
+                    for (let file of datasetStructure[mainFolder][studentFolder]) {
+                        html += `
+                            <div class="tree-item file" style="margin-left: 40px;">
+                                <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                                </svg>
+                                📷 ${file}
+                            </div>
+                        `;
+                    }
+                }
+            }
+
+            if (html === '') {
+                html = `
+                    <div class="tree-item folder">
+                        <svg class="tree-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+                        </svg>
+                        📁 attendance_dataset/ (empty)
+                    </div>
+                    <p style="text-align: center; color: #666; margin-top: 20px;">Upload your dataset to see the structure here</p>
+                `;
+            }
+
+            treeContainer.innerHTML = html;
+        }
+
+        function trainModel() {
+            const modelTraining = document.getElementById('modelTraining');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            modelTraining.style.display = 'block';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        modelTraining.style.display = 'none';
+                        alert('Model training completed successfully!');
+                    }, 1000);
+                }
+                
+                progressFill.style.width = progress + '%';
+                progressText.textContent = Math.round(progress) + '% Complete';
+            }, 500);
+        }
+
+        // Drag and drop functionality
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const items = e.dataTransfer.items;
+            if (items) {
+                for (let item of items) {
+                    if (item.webkitGetAsEntry) {
+                        const entry = item.webkitGetAsEntry();
+                        if (entry && entry.isDirectory) {
+                            // Handle folder drop
+                            alert('Folder dropped! Please use the file input for now.');
+                        }
+                    }
+                }
+            }
+        });
+
+        // Initialize with sample data
+        window.addEventListener('load', () => {
+            datasetStructure = {
+                // 'attendance_dataset': {
+                //     'john_doe__101': ['photo1.jpg', 'photo2.jpg', 'photo3.jpg'],
+                //     'jane_smith__102': ['image1.jpg', 'image2.jpg'],
+                //     'mike_johnson__103': ['pic1.jpg', 'pic2.jpg', 'pic3.jpg']
+                // }
+            };
+            updateDatasetVisualization();
+        });
+
+        window.addEventListener('resize', () => {
+            const sidebar = document.getElementById('sidebar');
+            const mainWrapper = document.getElementById('mainWrapper');
+            const mobileToggle = document.querySelector('.mobile-toggle');
+            
+            if (window.innerWidth <= 768) {
+                // Reset to mobile state
+                sidebar.classList.remove('minimized', 'collapsed');
+                mainWrapper.classList.remove('minimized', 'expanded');
+                mobileToggle.classList.remove('show-desktop');
+            }
+        });
+    </script>
+</body>
+</html>

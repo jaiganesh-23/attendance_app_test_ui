@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/photo_capture_app.html" },
+    { "source": "/dataset", "destination": "/dataset_app.html" }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
+}

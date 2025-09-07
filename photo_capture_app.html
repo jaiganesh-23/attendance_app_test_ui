@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance System - Home</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Navigation Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-200px);
+        }
+
+        /* Added minimized sidebar state with only menu button visible */
+        .sidebar.minimized {
+            width: 60px;
+            transform: translateX(0);
+        }
+
+        .sidebar.minimized .sidebar-header h2,
+        .sidebar.minimized .nav-item span {
+            display: none;
+        }
+
+        .sidebar.minimized .nav-item {
+            justify-content: center;
+            padding: 12px;
+        }
+
+        .sidebar.minimized .nav-item svg {
+            margin-right: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h2 {
+            color: #333;
+            font-size: 1.2rem;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            color: #666;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-menu {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            color: #333;
+            font-size: 0.95rem;
+            transition: background-color 0.2s;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-item.active {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-right: 3px solid #667eea;
+        }
+
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+        }
+
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Show mobile toggle when sidebar is minimized on desktop */
+        .mobile-toggle.show-desktop {
+            display: block;
+        }
+
+        .main-wrapper {
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .main-wrapper.expanded {
+            margin-left: 0;
+        }
+
+        /* Added minimized wrapper state */
+        .main-wrapper.minimized {
+            margin-left: 60px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 1.3rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .section-title svg {
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .camera-container {
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #videoElement {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 15px;
+        }
+
+        .camera-placeholder {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+
+        .camera-placeholder svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 140px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .file-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .file-info h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+
+        .file-info p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .status-indicator {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-processing {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-250px);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            /* Reset minimized state on mobile */
+            .sidebar.minimized {
+                width: 250px;
+                transform: translateX(-250px);
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+            }
+
+            /* Reset minimized wrapper on mobile */
+            .main-wrapper.minimized {
+                margin-left: 0;
+            }
+
+            /* Improved mobile header sizing and spacing */
+            .header {
+                padding: 25px 15px;
+                margin-bottom: 25px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+                line-height: 1.2;
+            }
+
+            .header p {
+                font-size: 1rem;
+                margin-top: 8px;
+            }
+
+            .container {
+                padding: 15px 10px;
+            }
+
+            /* Ensure single column layout on mobile */
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            /* Improved mobile section padding and spacing */
+            .section {
+                padding: 20px 15px;
+            }
+
+            .section-title {
+                font-size: 1.1rem;
+                margin-bottom: 20px;
+            }
+
+            /* Better mobile camera container sizing */
+            .camera-container {
+                min-height: 250px;
+                margin-bottom: 15px;
+            }
+
+            .camera-placeholder {
+                padding: 30px 15px;
+            }
+
+            .camera-placeholder svg {
+                width: 40px;
+                height: 40px;
+                margin-bottom: 10px;
+            }
+
+            .camera-placeholder p {
+                font-size: 0.9rem;
+            }
+
+            /* Improved mobile button layout and sizing */
+            .controls {
+                justify-content: center;
+                gap: 8px;
+                margin-bottom: 15px;
+            }
+
+            .btn {
+                flex: 1;
+                min-width: 100px;
+                max-width: 140px;
+                justify-content: center;
+                padding: 10px 12px;
+                font-size: 0.8rem;
+            }
+
+            /* Better mobile upload area */
+            .upload-area {
+                padding: 25px 15px;
+                margin-bottom: 15px;
+            }
+
+            .upload-area h3 {
+                font-size: 1rem;
+                margin-bottom: 8px;
+            }
+
+            .upload-area p {
+                font-size: 0.85rem;
+                margin-bottom: 10px;
+            }
+
+            /* Improved mobile file list */
+            .file-list {
+                max-height: 250px;
+            }
+
+            .file-item {
+                padding: 12px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .file-info h4 {
+                font-size: 0.9rem;
+            }
+
+            .file-info p {
+                font-size: 0.8rem;
+            }
+
+            .file-item > div:last-child {
+                width: 100%;
+                justify-content: space-between;
+                display: flex;
+                align-items: center;
+            }
+        }
+
+        /* Tablet Responsive */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            /* Force single column on tablet */
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+
+            .container {
+                padding: 30px 20px;
+            }
+
+            .header {
+                padding: 35px 25px;
+            }
+
+            .section {
+                padding: 25px 20px;
+            }
+        }
+
+        /* Extra small mobile devices */
+        @media (max-width: 480px) {
+            .header {
+                padding: 20px 15px;
+                margin-bottom: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.6rem;
+            }
+
+            .header p {
+                font-size: 0.9rem;
+            }
+
+            .section {
+                padding: 15px 12px;
+            }
+
+            .section-title {
+                font-size: 1rem;
+            }
+
+            .camera-container {
+                min-height: 200px;
+            }
+
+            /* Stack buttons vertically on very small screens */
+            .controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .btn {
+                width: 100%;
+                min-width: auto;
+                max-width: none;
+                padding: 12px;
+                font-size: 0.85rem;
+            }
+
+            .upload-area {
+                padding: 20px 12px;
+            }
+
+            .file-item {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Menu</h2>
+            <button class="toggle-btn" onclick="toggleSidebar()">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="nav-menu">
+            <a href="photo_capture_app.html" class="nav-item active">
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                </svg>
+                <span>Home</span>
+            </a>
+            <a href="dataset_app.html" class="nav-item">
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+                </svg>
+                <span>Upload Dataset</span>
+            </a>
+        </div>
+    </nav>
+
+    <button class="mobile-toggle" onclick="toggleSidebar()">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+        </svg>
+    </button>
+
+    <div class="main-wrapper" id="mainWrapper">
+        <div class="container">
+            <div class="header">
+                <h1>Smart Attendance System</h1>
+                <p>AI-powered face recognition for automated attendance tracking</p>
+            </div>
+
+            <div class="main-content">
+                <!-- Camera Section -->
+                <div class="section">
+                    <div class="section-title">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                        </svg>
+                        Photo Capture
+                    </div>
+                    
+                    <div class="camera-container" id="cameraContainer">
+                        <div class="camera-placeholder" id="cameraPlaceholder">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                            </svg>
+                            <p>Click "Start Camera" to begin</p>
+                        </div>
+                        <video id="videoElement" style="display: none;" autoplay muted playsinline></video>
+                        <canvas id="captureCanvas" style="display: none;"></canvas>
+                    </div>
+
+                    <div class="controls">
+                        <!-- Show all camera buttons always -->
+                        <button class="btn btn-primary" id="startCameraBtn" onclick="startCamera()">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M0 5a2 2 0 0 1 2-2h7.5a2 2 0 0 1 1.983 1.738l3.11-1.382A1 1 0 0 1 16 4.269v7.462a1 1 0 0 1-1.406.913l-3.111-1.382A2 2 0 0 1 9.5 13H2a2 2 0 0 1-2-2V5z"/>
+                            </svg>
+                            Start Camera
+                        </button>
+                        <button class="btn btn-secondary" id="switchCameraBtn" onclick="switchCamera()">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8zm15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
+                            </svg>
+                            Switch Camera
+                        </button>
+                        <button class="btn btn-success" id="captureBtn" onclick="capturePhoto()">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+                            </svg>
+                            Capture Photo
+                        </button>
+                        <button class="btn btn-danger" id="stopCameraBtn" onclick="stopCamera()">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M5.5 3.5A1.5 1.5 0 0 1 7 2h2a1.5 1.5 0 0 1 1.5 1.5v1H14a.5.5 0 0 1 0 1h-.5v9a2 2 0 0 1-2 2H4.5a2 2 0 0 1-2-2v-9H2a.5.5 0 0 1 0-1h2.5v-1z"/>
+                            </svg>
+                            Stop Camera
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Excel Files Section -->
+                <div class="section">
+                    <div class="section-title">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zM3 6a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V6zM4 2a1 1 0 000 2h12a1 1 0 100-2H4z" clip-rule="evenodd"/>
+                        </svg>
+                        Excel Files
+                    </div>
+
+                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                        <svg width="48" height="48" fill="currentColor" viewBox="0 0 20 20" style="color: #ccc; margin-bottom: 15px;">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zM3 6a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V6zM4 2a1 1 0 000 2h12a1 1 0 100-2H4z" clip-rule="evenodd"/>
+                        </svg>
+                        <h3>Upload Photo for Processing</h3>
+                        <p>Drag and drop your photo here or click to browse</p>
+                        <button class="btn btn-primary" style="margin-top: 15px;">Choose File</button>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+
+                    <div class="file-list" id="fileList">
+                        <!-- Generated files will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStream = null;
+        let currentFacingMode = 'user';
+        let generatedFiles = [];
+
+        // Navigation functions
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainWrapper = document.getElementById('mainWrapper');
+            const mobileToggle = document.querySelector('.mobile-toggle');
+            
+            if (window.innerWidth <= 768) {
+                // Mobile behavior
+                sidebar.classList.toggle('open');
+            } else {
+                // Desktop behavior - toggle between full, minimized, and collapsed
+                if (sidebar.classList.contains('collapsed')) {
+                    // From collapsed to full
+                    sidebar.classList.remove('collapsed');
+                    sidebar.classList.remove('minimized');
+                    mainWrapper.classList.remove('expanded');
+                    mainWrapper.classList.remove('minimized');
+                    mobileToggle.classList.remove('show-desktop');
+                } else if (sidebar.classList.contains('minimized')) {
+                    // From minimized to collapsed
+                    sidebar.classList.add('collapsed');
+                    sidebar.classList.remove('minimized');
+                    mainWrapper.classList.add('expanded');
+                    mainWrapper.classList.remove('minimized');
+                    mobileToggle.classList.remove('show-desktop');
+                } else {
+                    // From full to minimized
+                    sidebar.classList.add('minimized');
+                    mainWrapper.classList.add('minimized');
+                    mobileToggle.classList.add('show-desktop');
+                }
+            }
+        }
+
+        // Camera functions
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: currentFacingMode,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const video = document.getElementById('videoElement');
+                const placeholder = document.getElementById('cameraPlaceholder');
+                
+                video.srcObject = currentStream;
+                video.style.display = 'block';
+                placeholder.style.display = 'none';
+                
+                document.getElementById('startCameraBtn').disabled = true;
+                document.getElementById('switchCameraBtn').disabled = false;
+                document.getElementById('captureBtn').disabled = false;
+                document.getElementById('stopCameraBtn').disabled = false;
+                
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                alert('Unable to access camera. Please check permissions.');
+            }
+        }
+
+        async function switchCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+            
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            await startCamera();
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('videoElement');
+            const canvas = document.getElementById('captureCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            
+            // Convert to blob and process
+            canvas.toBlob(blob => {
+                processPhoto(blob);
+            }, 'image/jpeg', 0.8);
+        }
+
+        function stopCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            
+            const video = document.getElementById('videoElement');
+            const placeholder = document.getElementById('cameraPlaceholder');
+            
+            video.style.display = 'none';
+            placeholder.style.display = 'block';
+            
+            document.getElementById('startCameraBtn').disabled = false;
+            document.getElementById('switchCameraBtn').disabled = true;
+            document.getElementById('captureBtn').disabled = true;
+            document.getElementById('stopCameraBtn').disabled = true;
+        }
+
+        // File handling functions
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                processPhoto(file);
+            }
+        }
+
+        function processPhoto(photoBlob) {
+            // Simulate processing
+            const fileName = `attendance_${new Date().toISOString().slice(0, 10)}_${Date.now()}.xlsx`;
+            const fileInfo = {
+                name: fileName,
+                date: new Date().toLocaleString(),
+                faces: Math.floor(Math.random() * 10) + 1,
+                status: 'processing'
+            };
+            
+            generatedFiles.unshift(fileInfo);
+            updateFileList();
+            
+            // Simulate processing completion
+            setTimeout(() => {
+                fileInfo.status = 'completed';
+                updateFileList();
+            }, 3000);
+        }
+
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            
+            if (generatedFiles.length === 0) {
+                fileList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No files generated yet</p>';
+                return;
+            }
+            
+            fileList.innerHTML = generatedFiles.map(file => `
+                <div class="file-item">
+                    <div class="file-info">
+                        <h4>${file.name}</h4>
+                        <p>Generated: ${file.date} • ${file.faces} faces recognized</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="status-indicator ${file.status === 'completed' ? 'status-completed' : 'status-processing'}">
+                            ${file.status === 'completed' ? 'Ready' : 'Processing...'}
+                        </span>
+                        ${file.status === 'completed' ? `
+                            <button class="btn btn-primary" onclick="downloadFile('${file.name}')" style="padding: 8px 16px; font-size: 0.8rem;">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                </svg>
+                                Download
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function downloadFile(fileName) {
+            // Generate mock Excel data
+            const csvContent = `Name,Roll Number,Time,Status\nJohn Doe,101,${new Date().toLocaleTimeString()},Present\nJane Smith,102,${new Date().toLocaleTimeString()},Present\nMike Johnson,103,${new Date().toLocaleTimeString()},Present`;
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Drag and drop functionality
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                processPhoto(files[0]);
+            }
+        });
+
+        // Initialize with some sample files
+        window.addEventListener('load', () => {
+            document.getElementById('switchCameraBtn').disabled = true;
+            document.getElementById('captureBtn').disabled = true;
+            document.getElementById('stopCameraBtn').disabled = true;
+            
+            generatedFiles = [
+                {
+                    name: 'attendance_2024_01_15.xlsx',
+                    date: 'Jan 15, 2024 - 09:30 AM',
+                    faces: 5,
+                    status: 'completed'
+                },
+                {
+                    name: 'attendance_2024_01_14.xlsx',
+                    date: 'Jan 14, 2024 - 02:15 PM',
+                    faces: 3,
+                    status: 'completed'
+                }
+            ];
+            updateFileList();
+        });
+
+        // Window resize handler to fix navigation states
+        window.addEventListener('resize', () => {
+            const sidebar = document.getElementById('sidebar');
+            const mainWrapper = document.getElementById('mainWrapper');
+            const mobileToggle = document.querySelector('.mobile-toggle');
+            
+            if (window.innerWidth <= 768) {
+                // Reset to mobile state
+                sidebar.classList.remove('minimized', 'collapsed');
+                mainWrapper.classList.remove('minimized', 'expanded');
+                mobileToggle.classList.remove('show-desktop');
+            }
+        });
+    </script>
+</body>
+</html>
